@@ -20,6 +20,17 @@
         };
     };
 
+    combos {
+        compatible = "zmk,combos";
+        /* Both top corners together on the Adjust layer -> DONGLE into bootloader */
+        combo_dongle_bootloader {
+            timeout-ms = <80>;
+            key-positions = <0 11>;
+            layers = <3>;
+            bindings = <&bootloader>;
+        };
+    };
+
     keymap {
         compatible = "zmk,keymap";
 
@@ -56,12 +67,19 @@
             >;
         };
 
+        /* Adjust = hold Lower + Raise, then:
+         *   top-left key             -> LEFT half into bootloader
+         *   top-right key            -> RIGHT half into bootloader
+         *   both top corners at once -> DONGLE into bootloader (combo above)
+         *   key below each corner    -> soft reset that half
+         *   left end of 3rd row      -> clear Bluetooth pairings
+         */
         adjust_layer {
             display-name = "Adjust";
             bindings = <
-&bt BT_CLR   &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4             &out OUT_USB &out OUT_BLE &trans &trans &trans &trans
-&trans       &trans       &trans       &trans       &trans       &trans                   &trans       &trans       &trans &trans &trans &trans
-&trans       &trans       &trans       &trans       &trans       &trans                   &trans       &trans       &trans &trans &trans &trans
+&bootloader  &bt BT_SEL 0 &bt BT_SEL 1 &bt BT_SEL 2 &bt BT_SEL 3 &bt BT_SEL 4             &out OUT_USB &out OUT_BLE &trans &trans &trans &bootloader
+&sys_reset   &trans       &trans       &trans       &trans       &trans                   &trans       &trans       &trans &trans &trans &sys_reset
+&bt BT_CLR   &trans       &trans       &trans       &trans       &trans                   &trans       &trans       &trans &trans &trans &trans
 &trans       &trans       &trans       &trans       &trans       &trans  &trans   &trans  &trans       &trans       &trans &trans &trans &trans
                           &trans       &trans       &trans       &trans                   &trans       &trans       &trans &trans
             >;
