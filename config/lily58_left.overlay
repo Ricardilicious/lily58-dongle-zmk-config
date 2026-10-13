@@ -1,0 +1,8 @@
+/* Left half: use the shared 56-key layout (inner key under the nice!nano removed) */
+#include "lily58_56.dtsi"
+
+/ {
+    chosen {
+        zmk,physical-layout = &lily58_56_layout;
+    };
+};
