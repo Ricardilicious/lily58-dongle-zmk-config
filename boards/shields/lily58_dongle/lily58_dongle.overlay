@@ -27,10 +27,6 @@
  */
 &pro_micro_i2c {
     status = "okay";
-    /* The nRF I2C driver merges the control byte + pixel data into one transfer.
-     * Default buffer is only 16 bytes, so every 128-byte pixel write failed
-     * (screen turned on but stayed full of random static). */
-    zephyr,concat-buf-size = <1024>;
 
     oled: sh1106@3c {
         compatible = "sinowealth,sh1106";
