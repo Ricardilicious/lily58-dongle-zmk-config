@@ -3,7 +3,7 @@
  *
  *   USB                    42 WPM
  *   ------------------------------
- *               BASE
+ *   [icon]      BASE       [icon]
  *   ------------------------------
  *   L [################----]  85%
  *   R [###########---------]  62%
@@ -30,7 +30,7 @@
 #include <zmk/events/battery_state_changed.h>
 #include <zmk/events/wpm_state_changed.h>
 
-#define W 128
+#define SCREEN_W 128
 #define NUM_HALVES 2
 #define SMALL (&lv_font_unscii_8)
 #define BIG (&lv_font_montserrat_16)
@@ -54,7 +54,7 @@ static lv_obj_t *make_label(lv_obj_t *parent, const lv_font_t *font, const char 
 static void make_rule(lv_obj_t *parent, lv_coord_t y) {
     lv_obj_t *r = lv_obj_create(parent);
     lv_obj_remove_style_all(r);
-    lv_obj_set_size(r, W, 1);
+    lv_obj_set_size(r, SCREEN_W, 1);
     lv_obj_set_pos(r, 0, y);
     lv_obj_set_style_bg_color(r, lv_color_white(), 0);
     lv_obj_set_style_bg_opa(r, LV_OPA_COVER, 0);
@@ -82,6 +82,52 @@ static void make_battery_row(lv_obj_t *parent, int idx, const char *name, lv_coo
     bat_pct[idx] = p;
 }
 
+/* ---------------- layer icons (original 16x16 pixel art) ---------------- */
+
+#define ICON 16
+/* 0 = BASE (house), 1 = LOWER (down), 2 = RAISE (up), 3 = ADJUST (gear) */
+static const uint16_t layer_icons[4][ICON] = {
+    /* BASE */
+    {0x0000, 0x0180, 0x03C0, 0x0660, 0x0C30, 0x1818, 0x300C, 0x6006, 0xF00F, 0x2004, 0x23C4, 0x2244, 0x2244, 0x2244, 0x3FFC, 0x0000},
+    /* LOWER */
+    {0x0000, 0x0000, 0x300C, 0x1818, 0x0C30, 0x0660, 0x03C0, 0x0180, 0x0000, 0x300C, 0x1818, 0x0C30, 0x0660, 0x03C0, 0x0180, 0x0000},
+    /* RAISE */
+    {0x0000, 0x0180, 0x03C0, 0x0660, 0x0C30, 0x1818, 0x300C, 0x0000, 0x0180, 0x03C0, 0x0660, 0x0C30, 0x1818, 0x300C, 0x0000, 0x0000},
+    /* ADJUST */
+    {0x0000, 0x03C0, 0x1248, 0x3A5C, 0x1FF8, 0x1C38, 0x781E, 0x4812, 0x4812, 0x781E, 0x1C38, 0x1FF8, 0x3A5C, 0x1248, 0x03C0, 0x0000},
+};
+
+static lv_color_t icon_buf[2][ICON * ICON];
+static lv_obj_t *icon_cv[2];
+
+static void draw_icon(lv_obj_t *cv, const uint16_t *bm) {
+    lv_canvas_fill_bg(cv, lv_color_black(), LV_OPA_COVER);
+    for (int y = 0; y < ICON; y++) {
+        for (int x = 0; x < ICON; x++) {
+            if (bm[y] & (0x8000 >> x)) {
+                lv_canvas_set_px_color(cv, x, y, lv_color_white());
+            }
+        }
+    }
+}
+
+static void set_layer_icons(uint8_t index) {
+    const uint16_t *bm = layer_icons[index < 4 ? index : 0];
+    for (int i = 0; i < 2; i++) {
+        if (icon_cv[i] != NULL) {
+            draw_icon(icon_cv[i], bm);
+        }
+    }
+}
+
+static lv_obj_t *make_icon(lv_obj_t *parent, int i, lv_coord_t x, lv_coord_t y) {
+    lv_obj_t *cv = lv_canvas_create(parent);
+    lv_canvas_set_buffer(cv, icon_buf[i], ICON, ICON, LV_IMG_CF_TRUE_COLOR);
+    lv_obj_set_pos(cv, x, y);
+    icon_cv[i] = cv;
+    return cv;
+}
+
 /* ---------------- layer ---------------- */
 
 struct layer_state {
@@ -105,6 +151,7 @@ static void layer_update_cb(struct layer_state s) {
     }
     lv_label_set_text(layer_lbl, buf);
     lv_obj_align(layer_lbl, LV_ALIGN_TOP_MID, 0, 15);
+    set_layer_icons(s.index);
 }
 
 static struct layer_state layer_get_state(const zmk_event_t *eh) {
@@ -130,7 +177,7 @@ static void output_update_cb(struct output_state s) {
     if (output_lbl == NULL) {
         return;
     }
-    char buf[16];
+    char buf[24];
     if (s.ep.transport == ZMK_TRANSPORT_USB) {
         snprintf(buf, sizeof(buf), "USB");
     } else if (!s.bonded) {
@@ -233,6 +280,9 @@ lv_obj_t *zmk_display_status_screen(void) {
     /* layer name, big and centred */
     layer_lbl = make_label(screen, BIG, "BASE");
     lv_obj_align(layer_lbl, LV_ALIGN_TOP_MID, 0, 15);
+    make_icon(screen, 0, 4, 16);
+    make_icon(screen, 1, SCREEN_W - ICON - 4, 16);
+    set_layer_icons(0);
     make_rule(screen, 36);
 
     /* batteries */
