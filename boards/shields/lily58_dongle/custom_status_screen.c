@@ -70,9 +70,12 @@ static void make_battery_row(lv_obj_t *parent, int idx, const char *name, lv_coo
     lv_obj_set_pos(bar, 11, y);
     lv_bar_set_range(bar, 0, 100);
     lv_bar_set_value(bar, 0, LV_ANIM_OFF);
+    /* rounded "pill" outline with a rounded fill inside */
+    lv_obj_set_style_radius(bar, LV_RADIUS_CIRCLE, LV_PART_MAIN);
     lv_obj_set_style_border_color(bar, lv_color_white(), LV_PART_MAIN);
     lv_obj_set_style_border_width(bar, 1, LV_PART_MAIN);
     lv_obj_set_style_pad_all(bar, 2, LV_PART_MAIN);
+    lv_obj_set_style_radius(bar, LV_RADIUS_CIRCLE, LV_PART_INDICATOR);
     lv_obj_set_style_bg_color(bar, lv_color_white(), LV_PART_INDICATOR);
     lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, LV_PART_INDICATOR);
     bat_bar[idx] = bar;
